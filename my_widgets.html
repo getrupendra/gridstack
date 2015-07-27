@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Knockout.js demo</title>
+
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="./gridstack.css"/>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.0/jquery-ui.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/3.5.0/lodash.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.2.0/knockout-min.js"></script>
+    <script src="./gridstack.js"></script>
+
+    <style type="text/css">
+        .grid-stack {
+            background: lightgoldenrodyellow;
+        }
+
+        .grid-stack-item-content {
+            color: #2c3e50;
+            text-align: center;
+            background-color: #18bc9c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h1>knockout.js Demo</h1>
+
+        <div>
+            <button data-bind="click: add_new_widget">Add new widget</button>
+        </div>
+		<style>
+		table, th,td{border:1px solid}
+		</style>
+        <br>
+		<table style="">
+		<thead>
+		<tr>
+			<th>x</th>
+			<th>y</th>
+			<th>width</th>
+			<th>height</th>
+			<th>id</th>
+			<th>auto</th>
+		<tr>
+		</thead>
+			<tbody data-bind="foreach: widgets">
+			<tr>
+				<td><input data-bind="value: x"/> </td>
+				<td><input data-bind="value: y"/></td>
+				<td><input data-bind="value: width"/></td>
+				<td><input data-bind="value: height"/></td>
+				<td><span data-bind="text: id"></span></td>
+				<td><span data-bind="text: auto_position"></span></td>
+			</tr>
+			</tbody>
+		</table>
+        <div data-bind="component: {name: 'dashboard-grid', params: $data}"></div>
+    </div>
+
+
+    <script type="text/javascript">
+        ko.components.register('dashboard-grid', {
+            viewModel: {
+                createViewModel: function (controller, componentInfo) {
+                    var ViewModel = function (controller, componentInfo) {
+                        var grid = null;
+
+                        this.widgets = controller.widgets;
+
+                        this.afterAddWidget = function (items) {
+                            if (grid == null) {
+                                grid = $(componentInfo.element).find('.grid-stack').gridstack({
+                                    auto: false
+                                }).data('gridstack');
+                            }
+
+                            var item = _.find(items, function (i) { return i.nodeType == 1 });
+                            grid.add_widget(item);
+                            
+							ko.utils.domNodeDisposal.addDisposeCallback(item, function () {
+                                grid.remove_widget(item);
+                            });
+                        };
+                    };
+
+                    return new ViewModel(controller, componentInfo);
+                }
+            },
+            template: { element: 'gridstack-template' }
+        });
+		
+		
+			function Item( x, y, width, height, id, ap, vs ) {
+				var self = this;
+
+				self.x = ko.observable(x);
+				self.y = ko.observable(y);
+				self.width = ko.observable(width);
+				self.height = ko.observable(height);
+				self.id = id;
+				self.auto_position = ap;
+				self.showing = ko.observable(vs);
+				
+			}
+
+
+			
+        $(document).ready(function() {
+		    console.log('in function()');
+			var serialize_widget_map = function (items) {
+				console.log(items);
+			};
+
+            var Controller = function (widgets) {
+			
+                var self = this;
+
+                this.widgets = ko.observableArray(widgets);
+	
+                this.add_new_widget = function () {
+					
+						var new_id = Math.floor(5 + 10* Math.random());
+                        var new_x = 0;
+                        var new_y = 0;
+                        var new_width = Math.floor(1 + 3 * Math.random());
+                        var new_height = Math.floor(1 + 3 * Math.random());
+                        var new_auto_position = true ; 
+                        var new_showing = true ; 
+
+						
+						var new_widget = new Item (new_x, new_y, new_width, new_height, new_id, new_auto_position, new_showing) ; 
+						//console.log(new_widget);
+						this.widgets.push( new_widget	);
+                };
+
+                this.delete_widget = function (item) {
+					console.log(item);
+                    self.widgets.remove(item);
+                };
+            };
+			
+			//a JSON string that we got from the server that wasn't automatically converted to an object
+            var JSONDataFromServer = '[{"x": 0, "y": 0, "width": 2, "height": 2, "id" : 1, "auto_position": true},{"x": 2, "y": 0, "width": 4, "height": 2, "id" : 2, "auto_position": true},{"x": 6, "y": 0, "width": 2, "height": 4, "id" : 3, "auto_position": true},{"x": 1, "y": 2, "width": 4, "height": 2, "id" : 4, "auto_position": true}]';
+			
+			//parse into an object
+			//var dataFromServer = ko.utils.parseJson(JSONDataFromServer);
+			
+            var dataFromServer = [
+				{"x": 0, "y": 3, "width": 3, "height": 3, "id" : 1, "auto_position": false, "showing": false},
+				{"x": 2, "y": 0, "width": 4, "height": 2, "id" : 2, "auto_position": true, "showing": true},
+				{"x": 6, "y": 0, "width": 2, "height": 4, "id" : 3, "auto_position": true, "showing": true},
+				{"x": 1, "y": 2, "width": 4, "height": 2, "id" : 4, "auto_position": true, "showing": true}
+			];
+			
+			//do some basic mapping (without mapping plugin)
+			var mappedData = ko.utils.arrayMap(dataFromServer, function(item) {
+				return new Item(item.x, item.y, item.width, item.height, item.id, item.auto_position, item.showing);
+			});
+			
+            var controlr = new Controller(mappedData);
+            ko.applyBindings(controlr);
+			
+			//this can be fired by other events
+			setTimeout(
+				function() {
+				controlr.widgets()[0].showing(true);
+				console.log(controlr.widgets()[0].showing());
+			}, 5000);
+	
+			//var contrlr = '';
+			//$.getJSON( "json.txt", function(wids) {
+			//	console.log("int this ");
+			//	console.log(wids);
+			//	//contrlr = new Controller(wids);
+			//	//ko.applyBindings(contrlr);
+			//});
+						
+        });
+    </script>
+
+    <template id="gridstack-template">
+        <div class="grid-stack" data-bind="foreach: {data: widgets, afterRender: afterAddWidget}">
+           <div class="grid-stack-item" data-bind="if: showing, attr: {'id': $data.id, 'data-gs-x': $data.x, 'data-gs-y': $data.y, 'data-gs-width': $data.width, 'data-gs-height': $data.height, 'data-gs-auto-position': $data.auto_position}">
+               <div class="grid-stack-item-content"><button data-bind="click: $root.delete_widget">Delete me</button><span data-bind="text: $data.id"><span></div>
+           </div></div><!-- <---- NO SPACE BETWEEN THESE CLOSING TAGS -->
+    </template>
+</body>
+</html>
